@@ -1,16 +1,18 @@
 #include <stdint.h>
 #include <iostream>
 
-struct ConditionCodes {
-    uint8_t z:1;
-    uint8_t s:1;
-    uint8_t p:1;
-    uint8_t cy:1;
-    uint8_t ac:1;
-    uint8_t pad:3;
+struct ConditionCodes
+{
+    uint8_t z : 1;
+    uint8_t s : 1;
+    uint8_t p : 1;
+    uint8_t cy : 1;
+    uint8_t ac : 1;
+    uint8_t pad : 3;
 };
 
-typedef struct State8080 {
+typedef struct State8080
+{
     uint8_t a;
     uint8_t b;
     uint8_t c;
@@ -25,10 +27,42 @@ typedef struct State8080 {
     uint8_t int_enable;
 };
 
-
-void UnimplementedInstruction(State8080* state) {
+void UnimplementedInstruction(State8080 *state)
+{
     std::cout << "Error: Unimplemented Instruction" << std::endl;
     exit(1);
 }
 
-int Emulate8080p(State8080* state) {}
+int Emulate8080p(State8080 *state)
+{
+    unsigned char *opcode = &state->memory[state->pc];
+    switch (*opcode)
+    {
+    case 0x00:
+        UnimplementedInstruction(state);
+        break;
+    case 0x01:
+        state->c = opcode[1];
+        state->b = opcode[2];
+        state->pc += 2;
+        break;
+    case 0x02:
+        UnimplementedInstruction(state);
+        break;
+    case 0x03:
+        UnimplementedInstruction(state);
+        break;
+    /* */
+    case 0xfe:
+        UnimplementedInstruction(state);
+        break;
+    case 0xff:
+        UnimplementedInstruction(state);
+        break;
+
+    default:
+        break;
+    }
+
+    state->pc += 1;
+}
