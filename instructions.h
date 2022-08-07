@@ -32,15 +32,28 @@ namespace cpu
         uint8_t int_enable;
     };
 
-    void add(State8080 *state, uint16_t answer)
+    void add(State8080 *state, uint16_t second)
     {
+        uint16_t answer = state->a + second;
         state->cc.z = ((answer & 0xff) == 0);          // is zero flag
         state->cc.s = ((answer & 0x80) != 1);          // set sign bit
         state->cc.cy = (answer & 0xff);                // carry flag
         state->cc.p = __builtin_parity(answer & 0xff); // parity flag
+        state->cc.ac = ((state->a & 0x8) & (second & 0x8)); // auxiliary carry
         state->a = answer & 0xff;
     }
 
+    void subtract(State8080* state, uint16_t second) {
+        uint16_t answer = state->a - second;
+
+        state->cc.cy = second > state->a;
+        state->cc.z = ((answer & 0xff) == 0);
+        state->cc.p = __builtin_parity(answer & 0xff);
+        state->cc.s = ((answer & 0x80) != 1);          // set sign bit
+
+        state->a = answer;
+
+    }
     uint16_t get_memory_offset(State8080 *state)
     {
         return (state->h << 8) | (state->l);
