@@ -1,37 +1,9 @@
 #include <stdint.h>
 #include <iostream>
+#include "instructions.h"
 
-struct ConditionCodes
-{
-    uint8_t z : 1;
-    uint8_t s : 1;
-    uint8_t p : 1;
-    uint8_t cy : 1;
-    uint8_t ac : 1;
-    uint8_t pad : 3;
-};
 
-typedef struct State8080
-{
-    uint8_t a;
-    uint8_t b;
-    uint8_t c;
-    uint8_t d;
-    uint8_t e;
-    uint8_t h;
-    uint8_t l;
-    uint16_t sp;
-    uint16_t pc;
-    uint8_t *memory;
-    ConditionCodes cc;
-    uint8_t int_enable;
-};
-
-void UnimplementedInstruction(State8080 *state)
-{
-    std::cout << "Error: Unimplemented Instruction" << std::endl;
-    exit(1);
-}
+using namespace cpu;
 
 int Emulate8080p(State8080 *state)
 {
@@ -52,6 +24,44 @@ int Emulate8080p(State8080 *state)
     case 0x03:
         UnimplementedInstruction(state);
         break;
+    case 0x80: // ADD B SSS=000 form
+    {
+        uint16_t answer = (uint16_t)state->a + (uint16_t)state->b;
+        add(state, answer);
+    }
+
+    case 0x81: // ADD C SSS=001 form
+    {
+        uint16_t answer = (uint16_t)state->a + (uint16_t)state->b;
+        add(state, answer);
+    }
+    case 0x86: // ADD M Load data from hight level and low level register
+    {
+        uint16_t offset = get_memory_offset(state); // combine both and you can access maximum of 65535 bytes of memory
+        uint16_t answer = (uint16_t)state->a + state->memory[offset];
+        add(state, answer);
+    }
+    case 0x8E: // ADC M (Add memory with carry) ADC ((H) (L)) + (CY)
+    {
+        uint16_t offset = get_memory_offset(state);
+        uint16_t answer = (uint16_t)state->a + state->memory[offset] + (uint16_t)state->cc.cy;
+        add(state, answer);
+    }
+    case 0x90: // SUB B (Subtract from Register B(000))
+    {
+        uint16_t answer = state->a - state->b;
+    }
+    case 0xC6: // ADD byte (immidetate form)
+    {
+        uint16_t answer = (uint16_t)state->a + (uint16_t)opcode[1];
+        add(state, answer);
+    }
+    case 0xCE: // ACI data (add immideate with carry) A <- (A) + (2nd byte) + (CY)
+    {
+        uint16_t answer = (uint16_t)state->a + (uint16_t)opcode[1] + uint16_t(state->cc.cy);
+        add(state, answer);
+    }
+
     /* */
     case 0xfe:
         UnimplementedInstruction(state);
